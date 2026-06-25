@@ -1,0 +1,19 @@
+# Dependencies
+web/node_modules/
+web/.next/
+web/out/
+
+# Compressed asset manifest (local)
+compress_manifest.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env / secrets
+.env
+.env.*
+.dev.vars
+
+# Wrangler
+.wrangler/
