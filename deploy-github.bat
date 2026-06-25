@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 chcp 65001 >nul
 title BanG Dream! - GitHub Pages 长期公网部署
 cd /d "%~dp0"
@@ -22,13 +23,8 @@ echo  ========================================
 echo   BanG Dream! - GitHub Pages 部署
 echo  ========================================
 echo.
-echo   部署后任何人用浏览器打开固定链接即可访问，
-echo   无需你的电脑开机。
-echo.
 echo   地址格式: https://你的用户名.github.io/仓库名/
-echo.
-echo   注意: 图片约 900MB，首次推送较慢；
-echo   GitHub Pages 站点上限 1GB（当前体积可部署）。
+echo   注意: 图片约 900MB，首次推送较慢
 echo.
 
 if not exist "web\public\assets" (
@@ -50,20 +46,28 @@ if "%GITHUB_USER%"=="" (
   exit /b 1
 )
 
-REM Git 首次使用必须配置身份，否则 commit 会失败
-git config user.name >nul 2>&1
-if errorlevel 1 (
+REM 检查 Git 身份（空字符串也算未配置）
+set "GIT_NAME_OK="
+set "GIT_EMAIL_OK="
+for /f "delims=" %%i in ('git config user.name 2^>nul') do set "GIT_NAME_OK=%%i"
+for /f "delims=" %%i in ('git config user.email 2^>nul') do set "GIT_EMAIL_OK=%%i"
+
+if not defined GIT_NAME_OK (
   echo.
-  echo [提示] 首次使用 Git，需要设置提交者信息（仅本机保存一次）
+  echo [提示] 需要设置 Git 提交者信息（本仓库保存一次即可）
   set /p GIT_NAME=请输入你的名字（可与 GitHub 用户名相同）: 
-  set /p GIT_EMAIL=请输入你的邮箱（GitHub 账号邮箱）: 
-  git config user.name "%GIT_NAME%"
-  git config user.email "%GIT_EMAIL%"
-  if errorlevel 1 (
-    echo [错误] Git 身份配置失败
+  if "!GIT_NAME!"=="" set "GIT_NAME=%GITHUB_USER%"
+  git config user.name "!GIT_NAME!"
+)
+
+if not defined GIT_EMAIL_OK (
+  set /p GIT_EMAIL=请输入你的邮箱（GitHub Settings - Emails 里查看）: 
+  if "!GIT_EMAIL!"=="" (
+    echo [错误] 邮箱不能为空
     pause
     exit /b 1
   )
+  git config user.email "!GIT_EMAIL!"
 )
 
 echo.
@@ -79,12 +83,10 @@ if errorlevel 1 (
   git commit -m "BanG Dream museum site with GitHub Pages"
   if errorlevel 1 (
     echo.
-    echo [错误] 提交失败。常见原因:
-    echo  - 未配置 Git 用户名/邮箱
-    echo  - 可手动运行:
-    echo    git config user.name "你的名字"
-    echo    git config user.email "你的邮箱"
-    echo    git commit -m "BanG Dream museum site with GitHub Pages"
+    echo [错误] 提交失败，请手动运行:
+    echo   git config user.name "Yizhengjia558-lab"
+    echo   git config user.email "你的邮箱"
+    echo   git commit -m "BanG Dream museum site with GitHub Pages"
     pause
     exit /b 1
   )
@@ -115,8 +117,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo 请确认 GitHub 上已创建空仓库（不要勾选 README）:
-echo   https://github.com/%GITHUB_USER%/%REPO_NAME%
+echo 请确认 GitHub 上已创建空仓库: https://github.com/%GITHUB_USER%/%REPO_NAME%
 echo.
 pause
 
@@ -134,14 +135,10 @@ if errorlevel 1 (
 
 echo.
 echo  ========================================
-echo   推送成功！请完成最后一步:
-echo.
-echo   1. 打开 https://github.com/%GITHUB_USER%/%REPO_NAME%/settings/pages
-echo   2. Source 选择 "GitHub Actions"
-echo   3. 等待 Actions 构建完成（约 5-15 分钟）
-echo.
-echo   网站地址:
-echo   https://%GITHUB_USER%.github.io/%REPO_NAME%/
+echo   推送成功！
+echo   网站地址: https://%GITHUB_USER%.github.io/%REPO_NAME%/
+echo   请到 Actions 页等待 Deploy GitHub Pages 完成
 echo  ========================================
 echo.
 pause
+endlocal
